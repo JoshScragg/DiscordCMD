@@ -17,7 +17,6 @@ class DisClient:
         while True:
             if auto_update:
                 if messages:
-                    #print("new messages POG")
                     new_messages = self.client.readMessage(
                         10, "558149491333660674")
                     if new_messages[-1].message_id != messages[-1].message_id:
@@ -55,24 +54,74 @@ class DisClient:
         #user_message = input("[ * ] > ")
         #self.client.sendMessage("729131457301184605", user_message)
 
+    def printHeader(self):
+        print("""
+  _____  _                       _  _____ __  __ _____  
+ |  __ \(_)                     | |/ ____|  \/  |  __ \ 
+ | |  | |_ ___  ___ ___  _ __ __| | |    | \  / | |  | |
+ | |  | | / __|/ __/ _ \| '__/ _` | |    | |\/| | |  | |
+ | |__| | \__ \ (_| (_) | | | (_| | |____| |  | | |__| |
+ |_____/|_|___/\___\___/|_|  \__,_|\_____|_|  |_|_____/ 
+                                                        
+
+        """)
+
+    def login(self):
+        email = input("[Login] Email > ")
+        password = input("[Login] Password > ")
+        token = self.client.auth(email, password)
+
+        if token:
+            for i in range(5):
+                os.system("clear")
+                self.printHeader()
+                print("[Login] Logging in /")
+                time.sleep(0.1)
+                os.system("clear")
+                self.printHeader()
+                print("[Login] Logging in -")
+                time.sleep(0.1)
+                os.system("clear")
+                self.printHeader()
+                print("[Login] Logging in \\")
+                time.sleep(0.1)
+
+            os.system("clear")
+            self.printHeader()
+            print("[Login] Logged in!")
+            time.sleep(2)
+
+    
+    def commands(self, u_input):
+        if u_input == "help":
+            print("""
+
+
+
+            """)
+
+
+
+    def welcome(self):
+        os.system("clear")
+        self.printHeader()
+        user_info = self.client.getUserInfo("@me")
+        print(f"Welcome {user_info.username}! type help to begin.")
+
+
+
 
 def main():
-    test = DisClient()
-    test.displayLoop()
-    '''
-    messages = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]
-    one = ["2", "3", "4", "5", "6", "7", "8", "9", "10", "11"]
-    three = ["5", "6", "7", "8", "9", "10", "11", "12", "13", "14"]
+    DiscordCMD = DisClient()
+    DiscordCMD.printHeader()
+    DiscordCMD.login()
+    DiscordCMD.welcome()
+    while True:
+        cmd = input("👾 > ")
+        DiscordCMD.commands(cmd.lower())
 
-    for i, message in enumerate(three):
-        if message == messages[-1]:
-            split_index = i
-    
-    test = messages + three[split_index:]
-    print(test)
-    '''
+
 
 
 if __name__ == '__main__':
     main()
-
