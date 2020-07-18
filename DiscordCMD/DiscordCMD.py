@@ -3,6 +3,7 @@ from creds import email, password
 import re
 import time
 import os
+import sys
 
 
 class DisClient:
@@ -10,33 +11,40 @@ class DisClient:
         pass
         self.client = DisWrapper()
         self.client.auth(email, password)
-        #self.client.request_logging = True
 
-    def displayLoop(self, auto_update=True):
+    def displayLoop(self, channel_id, read_only=False):
         messages = []
         while True:
-            if auto_update:
-                if messages:
-                    new_messages = self.client.readMessage(
-                        10, "558149491333660674")
-                    if new_messages[-1].message_id != messages[-1].message_id:
-                        for i, message in enumerate(new_messages):
-                            if message.message_id == messages[-1].message_id:
-                                message_index = i+1
-                        messages = messages + new_messages[message_index:]
-                        self.display(messages)
-                    else:
-                        continue
-                else:
-                    new_messages = self.client.readMessage(
-                        10, "558149491333660674")
-                    messages = messages + new_messages
+            if messages:
+                new_messages = self.client.readMessage(
+                    10, channel_id)
+                if new_messages[-1].message_id != messages[-1].message_id:
+                    for i, message in enumerate(new_messages):
+                        if message.message_id == messages[-1].message_id:
+                            message_index = i+1
+                    messages = messages + new_messages[message_index:]
                     self.display(messages)
+                else:
+                    continue
+            else:
+                new_messages = self.client.readMessage(
+                    10, channel_id)
+                messages = messages + new_messages
+                self.display(messages, channel_id)
+            
+            if read_only:
+                time.sleep(10)
+            else:
+                user_message = input("👾 > ")
+                if user_message == "-exit":
+                    return
+                else:
+                    self.client.sendMessage(channel_id, user_message)
 
-            time.sleep(10)
 
-    def display(self, messages):
+    def display(self, messages, channel_id):
         os.system("clear")
+        self.printHeader()
         for message in messages:
             date = message.timestamp.split("T")[0]
             time = message.timestamp.split("T")[1].split(".")[0]
@@ -51,8 +59,6 @@ class DisClient:
             else:
                 print(f"{time} {message.author.username}: {message.content}")
         print()
-        #user_message = input("[ * ] > ")
-        #self.client.sendMessage("729131457301184605", user_message)
 
     def printHeader(self):
         print("""
@@ -91,24 +97,55 @@ class DisClient:
             print("[Login] Logged in!")
             time.sleep(2)
 
-    
+    def userInfo(self, user_id):
+        user = self.client.getUserInfo(user_id)
+        print(f"""
+  UserID: {user.user_id}
+Username: {user.username}:{user.discriminator}
+  Avatar: https://cdn.discordapp.com/avatars/{user.user_id}/{user.avatar}.png?size=256
+   Flags: {user.public_flags}
+        """)
+
     def commands(self, u_input):
-        if u_input == "help":
+        args = u_input.split()
+        command = args.pop(0)
+        for i, arg in enumerate(args):
+            temp = arg[1:]
+            args.pop(i)
+            args.insert(i, temp)
+        # actually returns item it pops so i just use that
+        if command == "help":
             print("""
-
-
-
+clear | clears the current screen | clear
+   ls | lists all servers         | ls
+   jc | joins text channel        | jc -[channel_id]
+   js | joins a server            | js -[server_id]
+ user | gets a users info         | user -[user_id]
+debug | toggles debug logging     | debug
+ exit | closes the program        | exit
             """)
-
-
+        elif command == "clear":
+            os.system("clear")
+            self.printHeader()
+        elif command == "ls":
+            pass
+        elif command == "js":
+            pass
+        elif command == "jc":
+            self.displayLoop(args[0])
+        elif command == "debug":
+            if self.client.request_logging:
+                self.client.request_logging = False
+            else:
+                self.client.request_logging = True
+        elif command == "user":
+            self.userInfo(args[0])
 
     def welcome(self):
         os.system("clear")
         self.printHeader()
         user_info = self.client.getUserInfo("@me")
         print(f"Welcome {user_info.username}! type help to begin.")
-
-
 
 
 def main():
@@ -118,9 +155,12 @@ def main():
     DiscordCMD.welcome()
     while True:
         cmd = input("👾 > ")
-        DiscordCMD.commands(cmd.lower())
-
-
+        if cmd == "exit":
+            sys.exit(0)
+        try:
+            DiscordCMD.commands(cmd.lower())
+        except:
+            print("[error] something went wrong")
 
 
 if __name__ == '__main__':
